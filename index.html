@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://mfkqhqypwlobydddkjjx.supabase.co; connect-src 'self' https://mfkqhqypwlobydddkjjx.supabase.co;">
+    
     <title>OV Hub | Premium Overlays</title>
     <style>
         :root { --green: #3ecf8e; --bg: #0a0a0a; --card: #161616; --text: #ededed; }
@@ -58,8 +60,7 @@
     </div>
 
     <h2>Последние поступления</h2>
-    <div class="grid" id="skins-grid">
-        </div>
+    <div class="grid" id="skins-grid"></div>
 </div>
 
 <script type="module">
@@ -68,14 +69,12 @@
 
     let selectedFileData = null;
 
-    // Безопасное отображение текста (защита от взлома)
     const escapeHTML = (str) => {
         const p = document.createElement('p');
         p.textContent = str;
         return p.innerHTML;
     };
 
-    // Чтение файла
     document.getElementById('file-field').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -94,7 +93,6 @@
         reader.readAsText(file);
     });
 
-    // Функция загрузки
     async function uploadSkin() {
         const user = document.getElementById('username').value.trim();
         const sName = document.getElementById('skin-name').value.trim();
@@ -109,7 +107,6 @@
         showStatus("Синхронизация с базой...", "white");
 
         try {
-            // Проверка на дубликаты
             const check = await fetch(`${SB_URL}/rest/v1/overlays?config=eq.${encodeURIComponent(selectedFileData)}&select=id`, {
                 headers: { 'apikey': SB_KEY }
             }).then(r => r.json());
@@ -120,7 +117,6 @@
                 return;
             }
 
-            // Отправка данных
             const response = await fetch(`${SB_URL}/rest/v1/overlays`, {
                 method: 'POST',
                 headers: {
@@ -150,7 +146,6 @@
         }
     }
 
-    // Загрузка скинов
     async function loadSkins() {
         try {
             const res = await fetch(`${SB_URL}/rest/v1/overlays?select=*&order=created_at.desc`, {
@@ -165,7 +160,6 @@
             }
 
             grid.innerHTML = skins.map(s => {
-                // Кодируем конфиг в Base64 для безопасного хранения в атрибуте кнопки
                 const safeData = btoa(unescape(encodeURIComponent(s.config)));
                 return `
                 <div class="card">
@@ -176,7 +170,6 @@
                 </div>`;
             }).join('');
 
-            // Логика кнопок копирования
             document.querySelectorAll('.copy-btn').forEach(btn => {
                 btn.onclick = () => {
                     const rawData = decodeURIComponent(escape(atob(btn.dataset.payload)));
