@@ -5,79 +5,216 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://mfkqhqypwlobydddkjjx.supabase.co; connect-src 'self' https://mfkqhqypwlobydddkjjx.supabase.co;">
     
-    <title>OV Hub | Premium Overlays</title>
+    <title>OV Hub | Code-Style Overlays</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --green: #3ecf8e; --bg: #0a0a0a; --card: #161616; --text: #ededed; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 900px; width: 100%; }
-        
-        .upload-section { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #333; margin-bottom: 40px; }
-        h2 { color: var(--green); margin-top: 0; }
-        .hint { font-size: 0.8em; color: #888; margin-bottom: 5px; margin-top: -5px; }
-        
-        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
-        input:focus { border-color: var(--green); outline: none; }
-        
-        .file-input { border: 1px dashed var(--green); cursor: pointer; text-align: center; padding: 20px; transition: 0.3s; }
-        .file-input:hover { background: #1a1a1a; }
-        
-        .btn-send { background: var(--green); color: black; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-send:hover { background: #34b27b; transform: scale(1.02); }
-        .btn-send:disabled { background: #222; color: #555; cursor: not-allowed; transform: none; }
+        :root { 
+            --green: #4caf50;    /* Цвет строк в коде */
+            --blue: #2196f3;     /* Цвет классов/функций (акцент) */
+            --bg: #1e1e1e;       /* Фон VS Code */
+            --card: #252526;     /* Фон панели/карточки */
+            --text: #d4d4d4;     /* Основной цвет текста */
+            --gray: #808080;     /* Комментарии */
+            --border: #333333;   /* Границы */
+        }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #222; position: relative; transition: 0.3s; }
-        .card:hover { border-color: var(--green); }
-        .card h3 { margin: 0 0 10px 0; font-size: 1.1em; color: var(--green); }
-        .card .author { color: #888; font-size: 0.85em; margin-bottom: 15px; }
-        .card .preview { height: 60px; background: #000; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.7em; color: #444; border: 1px solid #333; letter-spacing: 2px; }
+        body { 
+            font-family: 'JetBrains Mono', monospace; /* Только моноширинный шрифт */
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            letter-spacing: -0.5px;
+        }
+
+        .container { max-width: 1000px; width: 100%; }
+
+        h1 { font-weight: 700; font-size: 2.2em; text-align: center; margin-bottom: 40px; }
+        h2 { color: var(--blue); font-weight: 500; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+        /* Форма загрузки в стиле панели редактора */
+        .upload-section { 
+            background: var(--card); 
+            padding: 30px; 
+            border-radius: 4px; /* Меньше скругление, больше строгости */
+            border: 1px solid var(--border); 
+            margin-bottom: 50px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .hint { font-size: 0.85em; color: var(--gray); margin-bottom: 15px; margin-top: -8px; display: block; }
         
-        .status { font-size: 0.9em; margin-bottom: 15px; padding: 10px; border-radius: 5px; display: none; background: rgba(255,255,255,0.05); }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 10px 0; 
+            border-radius: 2px; 
+            border: 1px solid var(--border); 
+            background: rgba(0,0,0,0.2); 
+            color: var(--green); /* Текст ввода зеленый, как строка */
+            font-family: 'JetBrains Mono', monospace;
+            box-sizing: border-box; 
+            transition: 0.2s;
+        }
+        input::placeholder { color: #555; }
+        input:focus { border-color: var(--blue); outline: none; background: rgba(0,0,0,0.3); }
         
-        .download-btn { background: transparent; border: 1px solid var(--green); color: var(--green); cursor: pointer; font-weight: bold; }
-        .download-btn:hover { background: var(--green); color: black; }
+        /* Стилизация выбора файла как блока кода */
+        .file-input { 
+            border: 1px dashed var(--gray); 
+            cursor: pointer; 
+            text-align: center; 
+            padding: 25px; 
+            margin: 15px 0; 
+            transition: 0.3s; 
+            color: var(--gray);
+            background: rgba(0,0,0,0.1);
+        }
+        .file-input:hover { border-color: var(--blue); color: var(--blue); background: rgba(33, 150, 243, 0.05); }
+        
+        .btn-send { 
+            background: var(--blue); 
+            color: white; 
+            font-weight: 700; 
+            border: none; 
+            padding: 15px;
+            margin-top: 20px;
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 2px;
+        }
+        .btn-send:hover { background: #1976d2; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3); }
+        .btn-send:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Сетка в стиле терминала/файлового менеджера */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 25px; 
+            padding-bottom: 40px;
+        }
+
+        /* Карточка как окно редактора */
+        .card { 
+            background: var(--card); 
+            border-radius: 4px; 
+            padding: 20px; 
+            border: 1px solid var(--border); 
+            position: relative; 
+            transition: 0.3s; 
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover { border-color: var(--blue); box-shadow: 0 5px 20px rgba(0,0,0,0.4); transform: translateY(-2px); }
+
+        /* Точки окна сверху слева */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 8px;
+            height: 8px;
+            background: #ff5f56;
+            border-radius: 50%;
+            box-shadow: 15px 0 0 #ffbd2e, 30px 0 0 #27c93f;
+            opacity: 0.5;
+        }
+
+        .card h3 { margin: 15px 0 8px 0; font-size: 1.2em; color: var(--blue); font-weight: 500; }
+        .card .author { color: var(--gray); font-size: 0.9em; margin-bottom: 20px; flex-grow: 1; }
+        
+        /* Превью как заголовок файла */
+        .card .preview { 
+            height: 30px; 
+            background: var(--bg); 
+            border-radius: 2px; 
+            margin-top: 15px;
+            margin-bottom: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.75em; 
+            color: var(--green); 
+            border: 1px solid var(--border); 
+            font-weight: bold;
+        }
+        
+        .status { font-size: 0.9em; margin-bottom: 15px; padding: 12px; border-radius: 2px; display: none; background: rgba(255,255,255,0.03); border: 1px solid transparent; }
+        
+        /* Кнопка скачивания в стиле "Outline" */
+        .download-btn { 
+            background: transparent; 
+            border: 1px solid var(--blue); 
+            color: var(--blue); 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-family: 'JetBrains Mono', monospace;
+            transition: 0.2s;
+            margin-top: auto; /* Всегда внизу карточки */
+            border-radius: 2px;
+        }
+        .download-btn:hover { background: var(--blue); color: white; box-shadow: 0 0 10px rgba(33, 150, 243, 0.2); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>OV HUB <span style="color:var(--green)">.</span></h1>
+    <h1><span style="color:var(--gray)">const</span> OV_HUB <span style="color:var(--gray)">=</span> { <span style="color:var(--blue)">.</span> }</h1>
 
     <div class="upload-section">
-        <h2>Опубликовать скин</h2>
+        <h2>publishSkin()</h2>
         <div id="status-msg" class="status"></div>
         
-        <input type="text" id="username" placeholder="Твой никнейм" maxlength="25">
+        <input type="text" id="username" placeholder="// Твой никнейм" maxlength="25">
         
-        <input type="text" id="skin-name" placeholder="Название скина" maxlength="35">
-        <div class="hint">Примеры: basic, normal, neon_gold, cosmic_v2</div>
+        <input type="text" id="skin-name" placeholder="// Название скина" maxlength="35">
+        <div class="hint">// Примеры: basic, normal, neon_gold, cosmic_v2</div>
         
         <div class="file-input" onclick="document.getElementById('file-field').click()">
-            Нажми, чтобы выбрать .ov файл
+            [ Нажми, чтобы выбрать .ov файл ]
             <input type="file" id="file-field" accept=".ov" style="display:none">
         </div>
         
-        <p id="file-name-display" style="font-size: 0.8em; color: var(--green); margin: 10px 0;"></p>
-        <button id="upload-btn" class="btn-send">ЗАГРУЗИТЬ В ОБЛАКО</button>
+        <p id="file-name-display" style="font-size: 0.85em; color: var(--green); margin: 10px 0; text-align: center;"></p>
+        <button id="upload-btn" class="btn-send">uploadSkin();</button>
     </div>
 
-    <h2>Последние поступления</h2>
+    <h2>latestEntries();</h2>
     <div class="grid" id="skins-grid"></div>
 </div>
 
 <script type="module">
+    // --- НАСТРОЙКИ SUPABASE ---
     const SB_URL = 'https://mfkqhqypwlobydddkjjx.supabase.co'; 
     const SB_KEY = 'sb_publishable_DsOLEjTMa8LN7vOO8dMy-Q_vMm1biTD';
 
     let selectedFileData = null;
 
+    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
     const escapeHTML = (str) => {
         const p = document.createElement('p');
         p.textContent = str;
         return p.innerHTML;
     };
 
-    // Функция скачивания файла
+    const showStatus = (text, color, borderColor = 'transparent') => {
+        const el = document.getElementById('status-msg');
+        el.style.display = "block";
+        el.style.color = color;
+        el.style.borderColor = borderColor;
+        el.innerText = `// ${text}`; // Добавляем комментарий
+    };
+
+    // --- ЛОГИКА СКАЧИВАНИЯ ---
     window.downloadFile = (safeData, fileName) => {
         try {
             const rawContent = decodeURIComponent(escape(atob(safeData)));
@@ -91,10 +228,11 @@
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         } catch (e) {
-            alert("Ошибка при скачивании файла");
+            alert("Ошибка скачивания");
         }
     };
 
+    // --- ОБРАБОТКА ВЫБОРА ФАЙЛА ---
     document.getElementById('file-field').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -102,23 +240,24 @@
         const reader = new FileReader();
         reader.onload = (event) => {
             selectedFileData = event.target.result;
-            document.getElementById('file-name-display').innerText = "✓ Файл выбран: " + file.name;
+            document.getElementById('file-name-display').innerText = `// file_status: READY -> ${file.name}`;
         };
         reader.readAsText(file);
     });
 
+    // --- ОБРАБОТКА ЗАГРУЗКИ ---
     async function uploadSkin() {
         const user = document.getElementById('username').value.trim();
         const sName = document.getElementById('skin-name').value.trim();
         const btn = document.getElementById('upload-btn');
 
         if (!user || !sName || !selectedFileData) {
-            showStatus("Заполни все поля и выбери файл!", "orange");
+            showStatus("Ошибка: Заполни все поля!", "orange", "orange");
             return;
         }
 
         btn.disabled = true;
-        showStatus("Синхронизация...", "white");
+        showStatus("Загрузка...", "var(--green)", var(--green));
 
         try {
             const response = await fetch(`${SB_URL}/rest/v1/overlays`, {
@@ -129,26 +268,23 @@
                     'Content-Type': 'application/json',
                     'Prefer': 'return=minimal'
                 },
-                body: JSON.stringify({
-                    name: sName,
-                    author: user,
-                    config: selectedFileData
-                })
+                body: JSON.stringify({ name: sName, author: user, config: selectedFileData })
             });
 
             if (response.ok) {
-                showStatus("Успешно опубликовано!", "var(--green)");
+                showStatus("Успех! Перезагрузка...", "var(--green)", "var(--green)");
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showStatus("Ошибка БД. Проверь политики RLS.", "red");
+                showStatus("Ошибка БД. Проверь RLS.", "red", "red");
                 btn.disabled = false;
             }
         } catch (err) {
-            showStatus("Ошибка сети: " + err.message, "red");
+            showStatus(`Ошибка сети: ${err.message}`, "red", "red");
             btn.disabled = false;
         }
     }
 
+    // --- ОБРАБОТКА ОТОБРАЖЕНИЯ ---
     async function loadSkins() {
         try {
             const res = await fetch(`${SB_URL}/rest/v1/overlays?select=*&order=created_at.desc`, {
@@ -158,7 +294,7 @@
             
             const grid = document.getElementById('skins-grid');
             if (!skins || skins.length === 0) {
-                grid.innerHTML = "<p>Лента пуста...</p>";
+                grid.innerHTML = "<p style='color:var(--gray); text-align:center;'>// Скинов пока нет...</p>";
                 return;
             }
 
@@ -167,25 +303,19 @@
                 const safeName = escapeHTML(s.name);
                 return `
                 <div class="card">
-                    <div class="preview">.OV CONFIG</div>
+                    <div class="preview"># ${safeName}.ov</div>
                     <h3>${safeName}</h3>
-                    <div class="author">Автор: ${escapeHTML(s.author)}</div>
-                    <button class="download-btn" onclick="downloadFile('${safeData}', '${safeName}')">СКАЧАТЬ .OV</button>
+                    <div class="author">// Автор: ${escapeHTML(s.author)}</div>
+                    <button class="download-btn" onclick="downloadFile('${safeData}', '${safeName}')">download_file();</button>
                 </div>`;
             }).join('');
 
         } catch (e) {
-            showStatus("Ошибка загрузки данных", "red");
+            grid.innerHTML = "<p style='color:red; text-align:center;'>// Ошибка загрузки данных</p>";
         }
     }
 
-    function showStatus(text, color) {
-        const el = document.getElementById('status-msg');
-        el.style.display = "block";
-        el.style.color = color;
-        el.innerText = text;
-    }
-
+    // --- ЗАПУСК ---
     document.getElementById('upload-btn').onclick = uploadSkin;
     loadSkins();
 </script>
