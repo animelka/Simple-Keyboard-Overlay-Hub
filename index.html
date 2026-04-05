@@ -11,20 +11,20 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 900px; width: 100%; }
         
-        /* Форма загрузки */
         .upload-section { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #333; margin-bottom: 40px; }
         h2 { color: var(--green); margin-top: 0; }
+        .hint { font-size: 0.8em; color: #888; margin-bottom: 5px; margin-top: -5px; }
+        
         input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
         input:focus { border-color: var(--green); outline: none; }
+        
         .file-input { border: 1px dashed var(--green); cursor: pointer; text-align: center; padding: 20px; transition: 0.3s; }
         .file-input:hover { background: #1a1a1a; }
         
-        /* Кнопка */
         .btn-send { background: var(--green); color: black; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
         .btn-send:hover { background: #34b27b; transform: scale(1.02); }
         .btn-send:disabled { background: #222; color: #555; cursor: not-allowed; transform: none; }
 
-        /* Сетка файлов */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #222; position: relative; transition: 0.3s; }
         .card:hover { border-color: var(--green); }
@@ -34,8 +34,8 @@
         
         .status { font-size: 0.9em; margin-bottom: 15px; padding: 10px; border-radius: 5px; display: none; background: rgba(255,255,255,0.05); }
         
-        .copy-btn { background: transparent; border: 1px solid var(--green); color: var(--green); cursor: pointer; }
-        .copy-btn:hover { background: var(--green); color: black; }
+        .download-btn { background: transparent; border: 1px solid var(--green); color: var(--green); cursor: pointer; font-weight: bold; }
+        .download-btn:hover { background: var(--green); color: black; }
     </style>
 </head>
 <body>
@@ -48,7 +48,9 @@
         <div id="status-msg" class="status"></div>
         
         <input type="text" id="username" placeholder="Твой никнейм" maxlength="25">
-        <input type="text" id="skin-name" placeholder="Название скина (например: Neon Gold)" maxlength="35">
+        
+        <input type="text" id="skin-name" placeholder="Название скина" maxlength="35">
+        <div class="hint">Примеры: basic, normal, neon_gold, cosmic_v2</div>
         
         <div class="file-input" onclick="document.getElementById('file-field').click()">
             Нажми, чтобы выбрать .ov файл
@@ -75,19 +77,31 @@
         return p.innerHTML;
     };
 
+    // Функция скачивания файла
+    window.downloadFile = (safeData, fileName) => {
+        try {
+            const rawContent = decodeURIComponent(escape(atob(safeData)));
+            const blob = new Blob([rawContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName.endsWith('.ov') ? fileName : fileName + '.ov';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (e) {
+            alert("Ошибка при скачивании файла");
+        }
+    };
+
     document.getElementById('file-field').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            const content = event.target.result;
-            if (content.length < 5 || content.length > 60000) {
-                showStatus("Ошибка: Файл слишком большой или поврежден!", "red");
-                selectedFileData = null;
-                return;
-            }
-            selectedFileData = content;
+            selectedFileData = event.target.result;
             document.getElementById('file-name-display').innerText = "✓ Файл выбран: " + file.name;
         };
         reader.readAsText(file);
@@ -104,19 +118,9 @@
         }
 
         btn.disabled = true;
-        showStatus("Синхронизация с базой...", "white");
+        showStatus("Синхронизация...", "white");
 
         try {
-            const check = await fetch(`${SB_URL}/rest/v1/overlays?config=eq.${encodeURIComponent(selectedFileData)}&select=id`, {
-                headers: { 'apikey': SB_KEY }
-            }).then(r => r.json());
-
-            if (check && check.length > 0) {
-                showStatus("Этот скин уже есть в хабе!", "orange");
-                btn.disabled = false;
-                return;
-            }
-
             const response = await fetch(`${SB_URL}/rest/v1/overlays`, {
                 method: 'POST',
                 headers: {
@@ -136,8 +140,7 @@
                 showStatus("Успешно опубликовано!", "var(--green)");
                 setTimeout(() => location.reload(), 1500);
             } else {
-                const errJson = await response.json();
-                showStatus("Ошибка БД: " + (errJson.message || "проверьте RLS"), "red");
+                showStatus("Ошибка БД. Проверь политики RLS.", "red");
                 btn.disabled = false;
             }
         } catch (err) {
@@ -155,42 +158,24 @@
             
             const grid = document.getElementById('skins-grid');
             if (!skins || skins.length === 0) {
-                grid.innerHTML = "<p>Пока ничего нет. Будь первым!</p>";
+                grid.innerHTML = "<p>Лента пуста...</p>";
                 return;
             }
 
             grid.innerHTML = skins.map(s => {
                 const safeData = btoa(unescape(encodeURIComponent(s.config)));
+                const safeName = escapeHTML(s.name);
                 return `
                 <div class="card">
                     <div class="preview">.OV CONFIG</div>
-                    <h3>${escapeHTML(s.name)}</h3>
+                    <h3>${safeName}</h3>
                     <div class="author">Автор: ${escapeHTML(s.author)}</div>
-                    <button class="copy-btn" data-payload="${safeData}">СКАЧАТЬ</button>
+                    <button class="download-btn" onclick="downloadFile('${safeData}', '${safeName}')">СКАЧАТЬ .OV</button>
                 </div>`;
             }).join('');
 
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const rawData = decodeURIComponent(escape(atob(btn.dataset.payload)));
-                    navigator.clipboard.writeText(rawData);
-                    
-                    const oldText = btn.innerText;
-                    btn.innerText = "СКОПИРОВАНО!";
-                    btn.style.background = "var(--green)";
-                    btn.style.color = "black";
-                    
-                    setTimeout(() => {
-                        btn.innerText = oldText;
-                        btn.style.background = "";
-                        btn.style.color = "";
-                    }, 1500);
-                };
-            });
-
         } catch (e) {
-            console.error(e);
-            showStatus("Не удалось загрузить ленту", "red");
+            showStatus("Ошибка загрузки данных", "red");
         }
     }
 
